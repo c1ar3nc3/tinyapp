@@ -22,7 +22,7 @@ app.get("/urls/new", (req, res) => {
 
 app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabase };
-  console.log(urlDatabase);
+  console.log(urlDatabase)
   res.render("urls_index", templateVars);
 });
 
@@ -58,9 +58,12 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   res.redirect('/urls')
 });
 
-app.post("/urls/:shortURL/edit", (req, res) => {
+app.post("/urls/:shortURL", (req, res) => {
   const longURL = req.body.longURL;
-  urlDatabase.longURL = longURL;
+  const shortURL = req.params.shortURL;
+  urlDatabase[shortURL] = longURL;
+  // urlDatabase.shortURL = shortURL;
+  res.redirect('/urls')
 });
 
 
