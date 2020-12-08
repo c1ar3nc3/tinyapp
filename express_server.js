@@ -22,11 +22,12 @@ app.get("/urls/new", (req, res) => {
 
 app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabase };
+  console.log(urlDatabase);
   res.render("urls_index", templateVars);
 });
 
 app.get("/urls/:shortURL", (req, res) => {
-  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL };
+  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL] };
   res.render("urls_show", templateVars)
 });
 
@@ -46,8 +47,15 @@ app.get("/u/:shortURL", (req, res) => {
 // creates 6-digit string and pushes updated values to long/shortURL
 app.post("/urls", (req, res) => {
   let newURL = generateRandomString();
-  urlDatabase[newURL] = {longURL: req.body.longURL};
+  const longURL = req.body.longURL;
+  urlDatabase[newURL] = longURL;
   res.redirect(`/urls/${newURL}`);
+});
+
+app.post("/urls/:shortURL/delete", (req, res) => {
+  const shortURL = req.params.shortURL
+  delete urlDatabase[shortURL];
+  res.redirect('/urls')
 });
 
 
@@ -60,7 +68,7 @@ app.listen(PORT, () => {
 function generateRandomString() {
   let randomStr = '';
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  for (let i = 0; i <= 6; i++) {
+  for (let i = 0; i < 6; i++) {
     randomStr += chars.charAt(Math.floor(Math.random() * chars.length));
   }
   return randomStr;
