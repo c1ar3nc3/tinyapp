@@ -68,6 +68,13 @@ app.get("/register", (req, res) => {
   res.render("register", templateVars)
 });
 
+app.get("/login", (req, res) => {
+  const templateVars = {
+    username: req.cookies["user_Id"]
+  }
+  res.render("login", templateVars)
+});
+
 //~~~~~~POSTS
 // creates 6-digit string and pushes updated values to long/shortURL
 app.post("/urls", (req, res) => {
@@ -91,9 +98,8 @@ app.post("/urls/:shortURL", (req, res) => {
 });
 //will login and save username as a cookie
 app.post("/login", (req, res) => {
-  const username = req.body.username;
-  res.cookie("username", username)
-  res.redirect('/urls')
+
+  res.redirect('/login')
 });
 //logs out user and clears cookie
 app.post("/logout", (req, res) => {

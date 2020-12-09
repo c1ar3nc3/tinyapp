@@ -14,10 +14,9 @@
             <td><button type = 'submit'>Logout</button></td>
           </form>
         <% } else { %>
-        <form method = "POST" action = "/login">
-          <td><input name = "username"/></td>
-          <td><button type = 'submit'>Login</button></td>
-        </form>
+          <td>Not a Member?<a href = "/register"> Register </a> here!</td>
+          <form method = "GET" action = "/login"
+          <td><button type = 'submit'>Login Here</button></td>
         <% } %>
       </div>
     </div>
