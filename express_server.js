@@ -9,6 +9,19 @@ app.use(cookieParser ());
 
 app.set("view engine", "ejs");
 
+const users = {
+  "userRandomID": {
+    id: "userRandomID",
+    email: "user@example.com",
+    password: "purple-monkey-dinosaur"
+  },
+  "userRandomID": {
+    id: "user2RandomID",
+    email: "user2@example.com",
+    password: "dishwasher-funk"
+  }
+}
+
 const urlDatabase = {
   "b2Vn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
@@ -16,7 +29,7 @@ const urlDatabase = {
 
 app.get("/urls/new", (req, res) => {
   const templateVars = {
-    username: req.cookies["username"]
+    username: req.cookies["user_Id"]
   }
   res.render("urls_new", templateVars);
 });
@@ -24,8 +37,9 @@ app.get("/urls/new", (req, res) => {
 app.get("/urls", (req, res) => {
   const templateVars = { 
     urls: urlDatabase,
-    username: req.cookies["username"]
+    username: req.cookies["user_Id"]
   };
+  console.log(users);
   res.render("urls_index", templateVars);
 });
 
@@ -33,7 +47,7 @@ app.get("/urls/:shortURL", (req, res) => {
   const templateVars = { 
     shortURL: req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL],
-    username: req.cookies["username"]
+    username: req.cookies["user_Id"]
   };
   res.render("urls_show", templateVars);
 });
@@ -49,7 +63,7 @@ app.get("/u/:shortURL", (req, res) => {
 
 app.get("/register", (req, res) => {
   const templateVars = {
-    username: req.cookies["username"]
+    username: req.cookies["user_Id"]
   }
   res.render("register", templateVars)
 });
@@ -81,10 +95,33 @@ app.post("/login", (req, res) => {
   res.cookie("username", username)
   res.redirect('/urls')
 });
-
+//logs out user and clears cookie
 app.post("/logout", (req, res) => {
-  const username = req.body.username;
-  res.clearCookie("username", username)
+  const user = req.body.username;
+  res.clearCookie("user_Id", user)
+  res.redirect('/urls')
+});
+//sets username and password after registration
+app.post("/register", (req, res) => {
+  const email = req.body.email;
+  const password = req.body.password;
+  const id = generateRandomString();
+  const user = {
+    id,
+    email,
+    password
+  }
+  users[id] = user;
+
+  if (email === "") {
+    return res.status(400).send('Email address cannot be empty');
+  }
+
+  if (email === user.email) {
+    return res.status(400).send('Email address already Registered');
+  }
+
+  res.cookie("user_Id", user);
   res.redirect('/urls')
 });
 
@@ -102,4 +139,14 @@ function generateRandomString() {
     randomStr += chars.charAt(Math.floor(Math.random() * chars.length));
   }
   return randomStr;
+};
+
+function emailLookup() {
+  let eMatch;
+  for (const userId in users) {
+    const user = users[userId];
+    if (user.email === email) {
+      eMatch = user;
+    };
+  }
 };
