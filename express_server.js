@@ -1,33 +1,42 @@
 const express = require("express");
 const app = express();
+const bodyParser = require("body-parser");
+const cookieParser = require("cookie-parser");
 const PORT = 8080;
 
-app.set("view engine", "ejs")
+app.use(bodyParser.urlencoded({extended: true}));
+app.use(cookieParser ());
+
+app.set("view engine", "ejs");
 
 const urlDatabase = {
   "b2Vn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
 };
 
-const bodyParser = require("body-parser");
-app.use(bodyParser.urlencoded({extended: true}));
 
-// app.get("/", (req, res) => {
-//   res.send("Hello!");
-// });
 
 app.get("/urls/new", (req, res) => {
-  res.render("urls_new");
+  const templateVars = {
+    username: req.cookies["username"]
+  }
+  res.render("urls_new", templateVars);
 });
 
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase };
-  console.log(urlDatabase)
+  const templateVars = { 
+    urls: urlDatabase,
+    username: req.cookies["username"]
+  };
   res.render("urls_index", templateVars);
 });
 
 app.get("/urls/:shortURL", (req, res) => {
-  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL] };
+  const templateVars = { 
+    shortURL: req.params.shortURL,
+    longURL: urlDatabase[req.params.shortURL],
+    username: req.cookies["username"]
+  };
   res.render("urls_show", templateVars);
 });
 
@@ -40,10 +49,7 @@ app.get("/u/:shortURL", (req, res) => {
   res.redirect(`${longURL}`)
 });
 
-// app.get("/hello", (req, res) => {
-//   res.send("<html><body> Hello <b>World</b></body></html>\n");
-// });
-
+//~~~~~~POSTS
 // creates 6-digit string and pushes updated values to long/shortURL
 app.post("/urls", (req, res) => {
   let newURL = generateRandomString();
@@ -51,18 +57,29 @@ app.post("/urls", (req, res) => {
   urlDatabase[newURL] = longURL;
   res.redirect(`/urls/${newURL}`);
 });
-
+// will delete URL's and return to url Index
 app.post("/urls/:shortURL/delete", (req, res) => {
   const shortURL = req.params.shortURL
   delete urlDatabase[shortURL];
   res.redirect('/urls')
 });
-
+// returns the updates short/long values to database
 app.post("/urls/:shortURL", (req, res) => {
   const longURL = req.body.longURL;
   const shortURL = req.params.shortURL;
   urlDatabase[shortURL] = longURL;
-  // urlDatabase.shortURL = shortURL;
+  res.redirect('/urls')
+});
+//will login and save username as a cookie
+app.post("/login", (req, res) => {
+  const username = req.body.username;
+  res.cookie("username", username)
+  res.redirect('/urls')
+});
+
+app.post("/logout", (req, res) => {
+  const username = req.body.username;
+  res.clearCookie("username", username)
   res.redirect('/urls')
 });
 
