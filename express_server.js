@@ -14,8 +14,6 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
-
-
 app.get("/urls/new", (req, res) => {
   const templateVars = {
     username: req.cookies["username"]
@@ -47,6 +45,13 @@ app.get("/urls.json", (req, res) => {
 app.get("/u/:shortURL", (req, res) => {
   const longURL = urlDatabase[req.params.shortURL].longURL;
   res.redirect(`${longURL}`)
+});
+
+app.get("/register", (req, res) => {
+  const templateVars = {
+    username: req.cookies["username"]
+  }
+  res.render("register", templateVars)
 });
 
 //~~~~~~POSTS
