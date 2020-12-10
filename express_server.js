@@ -2,12 +2,14 @@ const express = require("express");
 const app = express();
 const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
+const bcrypt = require("bcrypt")
 const PORT = 8080;
 
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(cookieParser ());
 
 app.set("view engine", "ejs");
+
 
 const users = {
   "userRandomID": {
@@ -28,7 +30,7 @@ const urlDatabase = {
 };
 
 app.get("/urls/new", (req, res) => {
-  const userId = req.cookies["user_Id"];
+  const userId = findUser(req.cookies["user_Id"]);
   const loggedIn = users[userId];
 
   const templateVars = {
@@ -169,43 +171,33 @@ app.post("/urls/:shortURL", (req, res) => {
 app.post("/login", (req, res) => {
   const eM = req.body.email;
   const pW = req.body.password;
-  for (let key in users) {
-    let usrMatch = users[key].email;
-    let pwMatch = users[key].password
-    if (eM === usrMatch) {
-      if (pW === pwMatch) {
-        let user = users[key];
-        res.cookie("user_Id", user)
-        res.redirect('/urls')
-        return;
-      } else {
-        return res.status(403).send('incorrect password');
-      }
-    }
+  
+  if (eM === "" || pW === "") {
+    res.status(400).send("fields cannot be blank");
+  } else if (emailLookup(eM) === false) {
+    res.status(403).send("Account not found")
+  } else if (bcrypt.compareSync(pW, findUser(eM)["password"])) {
+    res.cookie("user_Id", findUser(eM)["id"]);
+    res.redirect("/urls")
+  } else {
+    res.status(401).send("incorrect password")
   }
-  return res.status(403).send('cannot find email address')
 });
 
 //sets username and password after registration
 app.post("/register", (req, res) => {
   const email = req.body.email;
-  const password = req.body.password;
-  const id = generateRandomString();
-  const user = {
-    id,
-    email,
-    password
-  }
-  users[id] = user;
-  
+  const password = bcrypt.hashSync(req.body.password, 10);
+ 
   if (email === "") {
     return res.status(400).send('Email address cannot be empty');
+  } else if (emailLookup(email)) {
+    res.status(400).send("Email address already registered")
+  } else {
+    let userId = addUser(email, password)
+    users.id = userId;
+    res.redirect("/login")
   }
-
-  if (email === users.email) {
-    return res.status(400).send('Email address already registered');
-  }
-  res.redirect('/login')
 });
 
 //logs out user and clears cookie
@@ -233,16 +225,7 @@ function generateRandomString() {
 
 function emailLookup(addy) {
   for (const mail in users) {
-    if (addy === users[mail].email) {
-      return users[mail];
-    }
-  }
-  return false;
-};
-
-function pwLookup(pw) {
-  for (const pass in users) {
-    if (pw === users[pass].password) {
+    if (addy === users[mail]["email"]) {
       return true;
     }
   }
@@ -257,6 +240,24 @@ function userURLS(database, user) {
     }
   }
   return userDatabase;
+}
+
+function findUser(email) {
+  for (let id in users) {
+    if (users[id]["email"] === email) {
+      return users[id];
+    }
+  }
+}
+
+function addUser(userEm, userPw) {
+  const newId = generateRandomString();
+  users[newId] = {
+    id: newId,
+    email: userEm,
+    password: userPw
+  }
+  return newId;
 }
 
 const authenticateUser = (username, password) => {
