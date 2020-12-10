@@ -39,7 +39,6 @@ app.get("/urls", (req, res) => {
     urls: urlDatabase,
     username: req.cookies["user_Id"]
   };
-  console.log(users);
   res.render("urls_index", templateVars);
 });
 
@@ -69,6 +68,7 @@ app.get("/register", (req, res) => {
 });
 
 app.get("/login", (req, res) => {
+  console.log(users)
   const templateVars = {
     username: req.cookies["user_Id"]
   }
@@ -76,6 +76,7 @@ app.get("/login", (req, res) => {
 });
 
 //~~~~~~POSTS
+
 // creates 6-digit string and pushes updated values to long/shortURL
 app.post("/urls", (req, res) => {
   let newURL = generateRandomString();
@@ -83,12 +84,14 @@ app.post("/urls", (req, res) => {
   urlDatabase[newURL] = longURL;
   res.redirect(`/urls/${newURL}`);
 });
+
 // will delete URL's and return to url Index
 app.post("/urls/:shortURL/delete", (req, res) => {
   const shortURL = req.params.shortURL
   delete urlDatabase[shortURL];
   res.redirect('/urls')
 });
+
 // returns the updates short/long values to database
 app.post("/urls/:shortURL", (req, res) => {
   const longURL = req.body.longURL;
@@ -96,17 +99,28 @@ app.post("/urls/:shortURL", (req, res) => {
   urlDatabase[shortURL] = longURL;
   res.redirect('/urls')
 });
+
 //will login and save username as a cookie
 app.post("/login", (req, res) => {
+  const eM = req.body.email;
+  const pW = req.body.password;
+  for (let key in users) {
+    let usrMatch = users[key].email;
+    let pwMatch = users[key].password
+    if (eM === usrMatch) {
+      if (pW === pwMatch) {
+        let user = users[key];
+        res.cookie("user_Id", user)
+        res.redirect('/urls')
+        return;
+      } else {
+        return res.status(403).send('incorrect password');
+      }
+    }
+  }
+  return res.status(403).send('cannot find email address')
+});
 
-  res.redirect('/login')
-});
-//logs out user and clears cookie
-app.post("/logout", (req, res) => {
-  const user = req.body.username;
-  res.clearCookie("user_Id", user)
-  res.redirect('/urls')
-});
 //sets username and password after registration
 app.post("/register", (req, res) => {
   const email = req.body.email;
@@ -118,24 +132,29 @@ app.post("/register", (req, res) => {
     password
   }
   users[id] = user;
-
+  
   if (email === "") {
     return res.status(400).send('Email address cannot be empty');
   }
 
-  if (email === user.email) {
-    return res.status(400).send('Email address already Registered');
+  if (email === users.email) {
+    return res.status(400).send('Email address already registered');
   }
+  res.redirect('/login')
+});
 
-  res.cookie("user_Id", user);
-  res.redirect('/urls')
+//logs out user and clears cookie
+app.post("/logout", (req, res) => {
+  const user = req.body.username;
+  res.clearCookie("user_Id", user)
+  res.redirect('/login')
 });
 
 
+// end
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
-
 
 // helper functions
 function generateRandomString() {
@@ -147,12 +166,20 @@ function generateRandomString() {
   return randomStr;
 };
 
-function emailLookup() {
-  let eMatch;
-  for (const userId in users) {
-    const user = users[userId];
-    if (user.email === email) {
-      eMatch = user;
-    };
+function emailLookup(addy) {
+  for (const mail in users) {
+    if (addy === users[mail].email) {
+      return users[mail].email;
+    }
   }
+  return false;
+};
+
+function pwLookup(pw) {
+  for (const pass in users) {
+    if (pw === users[pass].password) {
+      return true;
+    }
+  }
+  return false;
 };
