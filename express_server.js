@@ -28,6 +28,10 @@ const urlDatabase = {
 };
 
 app.get("/urls/new", (req, res) => {
+  const userId = req.cookies.user_Id;
+  if (!userId){
+    return res.redirect('/login');
+  }
   const templateVars = {
     username: req.cookies["user_Id"]
   }
@@ -79,8 +83,8 @@ app.get("/login", (req, res) => {
 
 // creates 6-digit string and pushes updated values to long/shortURL
 app.post("/urls", (req, res) => {
-  let newURL = generateRandomString();
   const longURL = req.body.longURL;
+  let newURL = generateRandomString();
   urlDatabase[newURL] = longURL;
   res.redirect(`/urls/${newURL}`);
 });
@@ -183,3 +187,4 @@ function pwLookup(pw) {
   }
   return false;
 };
+
