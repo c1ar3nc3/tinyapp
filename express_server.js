@@ -1,13 +1,19 @@
 const express = require("express");
 const app = express();
 const bodyParser = require("body-parser");
-const cookieParser = require("cookie-parser");
+// const cookieParser = require("cookie-parser");
+const cookieSession = require('cookie-session')
 const bcrypt = require("bcrypt")
 const PORT = 8080;
 
 app.use(bodyParser.urlencoded({extended: true}));
-app.use(cookieParser ());
+// app.use(cookieParser ());
+app.use(cookieSession({
+  name: 'session',
+  keys: ["secretKey"],
 
+  maxAge: 24 * 60 * 60 * 1000 // 24 hours
+}))
 app.set("view engine", "ejs");
 
 
@@ -30,7 +36,7 @@ const urlDatabase = {
 };
 
 app.get("/urls/new", (req, res) => {
-  const userId = findUser(req.cookies["user_Id"]);
+  const userId = findUser(req.session.user_id);
   const loggedIn = users[userId];
 
   const templateVars = {
@@ -45,7 +51,7 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  const userId = req.cookies["user_Id"];
+  const userId = req.session.user_id;
   const loggedIn = users[userId];
   const usersURLS = userURLS(userId);
 
@@ -65,7 +71,7 @@ app.get("/urls", (req, res) => {
 });
 
 app.get("/urls/:shortURL", (req, res) => {
-  const userId = req.cookies["user_Id"];
+  const userId = req.session.user_id;
   const loggedIn = users[userId];
   const shortURL = req.params.shortURL;
   const longURL = urlDatabase[shortURL].url
@@ -101,7 +107,7 @@ app.get("/u/:shortURL", (req, res) => {
 });
 
 app.get("/register", (req, res) => {
-  const userId = req.cookies["user_Id"];
+  const userId = req.session.user_id;
   const loggedIn = users[userId];
 
   const templateVars = {
@@ -116,7 +122,7 @@ app.get("/register", (req, res) => {
 });
 
 app.get("/login", (req, res) => {
-  const userId = req.cookies["user_Id"];
+  const userId = req.session.user_id;
   const loggedIn = users[userId];
 
   const templateVars = {
@@ -177,7 +183,7 @@ app.post("/login", (req, res) => {
   } else if (emailLookup(eM) === false) {
     res.status(403).send("Account not found")
   } else if (bcrypt.compareSync(pW, findUser(eM)["password"])) {
-    res.cookie("user_Id", findUser(eM)["id"]);
+    req.session.user_id = findUser(eM)["id"];
     res.redirect("/urls")
   } else {
     res.status(401).send("incorrect password")
@@ -203,7 +209,7 @@ app.post("/register", (req, res) => {
 //logs out user and clears cookie
 app.post("/logout", (req, res) => {
   const user = req.body.username;
-  res.clearCookie("user_Id", user)
+  req.session = null;
   res.redirect('/login')
 });
 
