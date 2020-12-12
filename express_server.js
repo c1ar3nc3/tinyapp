@@ -1,6 +1,5 @@
 const express = require("express");
 const app = express();
-const helpers = require("./helpers");
 const bodyParser = require("body-parser");
 const cookieSession = require("cookie-session");
 const bcrypt = require("bcrypt")
@@ -15,6 +14,10 @@ app.use(cookieSession({
 
 app.set("view engine", "ejs");
 
+const { 
+  generateRandomString,
+  checkEmail,
+  urlsForUser } = require("./helpers")
 
 const users = {
   "userRandomID": {
@@ -202,44 +205,14 @@ app.post("/urls/:shortURL/edit", (req, res) => {
 
 // will delete URL's and return to url Index
 app.post("/urls/:shortURL/delete", (req, res) => {
-  if (req.session.user_id.id === urlDatabase[req.params.shortURL].userID) {
-    delete urlDatabase[req.params.shortURL];
-    res.redirect("/urls");
-  } else {
+  if (!req.session.user_id) {
     res.redirect("/login");
   }
+    delete urlDatabase[req.params.shortURL];
+    res.redirect("/urls");
 });
 
 // end
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
-
-function generateRandomString() {
-  let randomStr = '';
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  for (let i = 0; i < 6; i++) {
-    randomStr += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return randomStr;
-};
-
-function checkEmail(email, users) {
-  let emailAddy = false;
-  for (let user in users) {
-    if (email === users[user]["email"]) {
-      emailAddy = true;
-    }
-  }
-  return emailAddy;
-}
-
-const urlsForUser = function(id, urlDatabase) {
-  const userUrls = {};
-  for (let shortURL in urlDatabase) {
-    if (urlDatabase[shortURL].userID === id) {
-      userUrls[shortURL] = urlDatabase[shortURL];
-    }
-  }
-  return userUrls;
-};
