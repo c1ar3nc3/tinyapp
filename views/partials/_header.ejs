@@ -8,17 +8,18 @@
       <div class="navbar-nav">
         <a class="nav-item nav-link" href="/urls">My URLs</a>
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
-        <% if (userId) { %>
-          <td>`Logged in as: <%= userId["email"] %>`</td>
-          <form method = "POST" action = "/logout">
-            <td><button type = 'submit'>Logout</button></td>
-          </form>
-        <% } else { %>
-          <td>Not a Member?<a href = "/register"> Register </a> here!</td>
-          <form method = "GET" action = "/login">
-          <td><button type = 'submit'>Login Here</button></td></form>
-        <% } %>
       </div>
     </div>
+    <% if(!user) { %>
+      <a class="nav-item nav-link" href="/register" style="background-color: rgb(182, 252, 171); margin: 10px"><b>Register</b></a>                 
+      <a class="nav-item nav-link" href="/login" style="background-color: rgb(182, 252, 171); margin: 10px"><b>Login</b></a>     
+<% } else { %>
+  <form class="form-inline" action="/logout" method="POST">
+    <div class="form-group mb-2">
+      <label for="name"><em>Logged in as <%= user.email %></em></label>
+      <button type="logout" class="btn btn-primary" href="/logout" style="background-color:black;">Logout</button>
+    </div>
+  </form>
+<% } %>
   </nav>
 </header>

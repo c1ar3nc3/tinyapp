@@ -15,14 +15,15 @@
     <%- include('partials/_header') %>
 
     <main style="margin: 1em;">
-      <h3>Register New User</h3>
-      <form method = "POST" action = "/register">
-        <label> Email: </label>
-        <td><input name = "email" name="email"/></td>
-        <label> Password: </label>
-        <td><input type = "text" name = "password"/></td>
-        <br/>
-        <td><button type = 'submit'>Register</button></td>
+      <h5>Register New User</h5>
+      <form action="/register" method="post">
+        <label for="email">Email:</label>
+        <input type="email" name="email">
+  
+        <label for="password">Password:</label>
+        <input type="password" name="password">
+  
+        <input type="submit" value="Register" class="btn btn-primary" style="margin: 1em; float: center;">
       </form>
     </main>
       <!-- Bootstrap JS -->
