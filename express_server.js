@@ -2,7 +2,7 @@ const express = require("express");
 const app = express();
 const bodyParser = require("body-parser");
 const cookieSession = require("cookie-session");
-const bcrypt = require("bcrypt")
+const bcrypt = require("bcrypt");
 const PORT = 8080;
 
 app.use(bodyParser.urlencoded({extended: true}));
@@ -17,30 +17,18 @@ app.set("view engine", "ejs");
 const { 
   generateRandomString,
   checkEmail,
-  urlsForUser } = require("./helpers")
+  urlsForUser } = require("./helpers");
 
 const users = {
-  "userRandomID": {
-    id: "userRandomID",
-    email: "user@example.com",
-    password: "purple-monkey-dinosaur"
-  },
-  "userRandomID": {
-    id: "user2RandomID",
-    email: "user2@example.com",
-    password: "dishwasher-funk"
-  }
-}
+};
 
 const urlDatabase = {
-  b6UTxQ: { longURL: "https://www.tsn.ca", userID: "aJ48lW" },
-  i3BoGr: { longURL: "https://www.google.ca", userID: "aJ48lW" }
 };
 
 //HOME PAGE~~~~
 app.get('/', (req, res) => {
   const userID = req.session.user_id;
-  const user = users[userID]
+  const user = users[userID];
   if (user) {
     let templateVars = {
       urlDatabase: urlData,
@@ -55,7 +43,7 @@ app.get('/', (req, res) => {
 //LOGIN~~~~~
 app.get("/login", (req,res) => {
   const userID = req.session.user_id;
-  const user = users[userID]
+  const user = users[userID];
   if (req.session["user_id"] === undefined) {
     const templateVars = { 
       user
@@ -86,13 +74,13 @@ app.post("/login", (req, res) => {
 //LOGOUT~~~~
 app.post("/logout", (req, res) => {
   req.session = null;
-  res.redirect('/urls')
+  res.redirect('/urls');
 });
 
 //REGISTER~~~
 app.get("/register", (req, res) => {
   const userID = req.session.user_id;
-  const user = users[userID]
+  const user = users[userID];
   const templateVars = { 
     user
    };
@@ -118,11 +106,11 @@ app.post("/register", (req, res) => {
 });
 
 /*  ~~~~~TinyURL~~~~~ */
-//URL Index for Users/non-Users
+//creates URL Index for Users/non-Users
 app.get("/urls", (req, res) => {
   if (req.session.user_id !== undefined) {
   const userID = req.session.user_id;
-  const user = users[userID]
+  const user = users[userID];
   const userUrls = urlsForUser(userID, urlDatabase);
     const templateVars = {
       urls: userUrls,
@@ -146,7 +134,7 @@ app.post("/urls", (req, res) => {
 //Create a new TinyURL
 app.get("/urls/new", (req, res) => {
   const userID = req.session.user_id;
-  const user = users[userID]
+  const user = users[userID];
   if (req.session.user_id !== undefined) {
     const userID = req.session.user_id;
     const templateVars = {
@@ -157,14 +145,13 @@ app.get("/urls/new", (req, res) => {
   return res.redirect("/login")
 });
 
-//makes tinyURL link active
+//makes tinyURL an active link
 app.get("/u/:shortURL", (req, res) => {
   if (urlDatabase[req.params.shortURL] === undefined) {
     return res.redirect("/login");
-  } else {
-    const longURL = urlDatabase[req.params.shortURL].longURL;
-    return res.redirect(longURL);
-  }
+  } 
+  const longURL = urlDatabase[req.params.shortURL].longURL;
+  return res.redirect(longURL);
 });
 
 //displays tinyURL link/longURL & Edit URL
@@ -194,7 +181,7 @@ app.post("/urls/:shortURL/edit", (req, res) => {
   const shortURL = req.params.shortURL;
   const userID = req.session.user_id;
   if (!req.session.user_id) {
-    return res.status(401).send("please log in to continue")
+    return res.status(401).send("please log in to continue");
   }
   if (userID !== urlDatabase[shortURL].userID) {
     return res.status(404).send("cannot edit another users URL");
