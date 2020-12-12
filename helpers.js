@@ -1,0 +1,34 @@
+function generateRandomString() {
+  let randomStr = '';
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  for (let i = 0; i < 6; i++) {
+    randomStr += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return randomStr;
+};
+
+function checkEmail(email, users) {
+  let emailAddy = false;
+  for (let user in users) {
+    if (email === users[user]["email"]) {
+      emailAddy = true;
+    }
+  }
+  return emailAddy;
+}
+
+const urlsForUser = function(id, urlDatabase) {
+  const userUrls = {};
+  for (let shortURL in urlDatabase) {
+    if (urlDatabase[shortURL].userID === id) {
+      userUrls[shortURL] = urlDatabase[shortURL];
+    }
+  }
+  return userUrls;
+};
+
+module.exports = {
+  generateRandomString,
+  checkEmail,
+  urlsForUser,
+}
