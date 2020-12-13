@@ -30,10 +30,6 @@ app.get('/', (req, res) => {
   const userID = req.session.user_id;
   const user = users[userID];
   if (user) {
-    let templateVars = {
-      urlDatabase: urlData,
-      user
-    };
     res.redirect("/urls");
   } else {
     res.redirect("/login");
@@ -62,7 +58,7 @@ app.post("/login", (req, res) => {
   for (let user in users) {
     if (email === users[user]["email"]) {
       if (bcrypt.compareSync(req.body.password, users[user]["password"])) {
-        req.session.user_id = users[user];
+        req.session.user_id = userByEmail(email)["id"];
         res.redirect("/urls");
       } else {
         return res.status(403).send("incorrect password");
@@ -74,7 +70,17 @@ app.post("/login", (req, res) => {
 //LOGOUT~~~~
 app.post("/logout", (req, res) => {
   req.session = null;
-  res.redirect('/urls');
+  res.redirect("/");
+});
+
+//ERROR~~~~~
+app.get("/error", (req, res) => {
+  const userID = req.session.user_id;
+  const user = users[userID];
+  const templateVars = { 
+    user
+  };
+  res.render("error", templateVars);
 });
 
 //REGISTER~~~
@@ -88,7 +94,7 @@ app.get("/register", (req, res) => {
 });
 
 app.post("/register", (req, res) => {
-  let emailAddy = req.body.email;
+  const emailAddy = req.body.email;
   if ((req.body.email === "") || (req.body.password === "")) {
     res.status(400).send("fields cannot be blank");
   } else if (checkEmail(emailAddy, users) === true) {
@@ -108,22 +114,18 @@ app.post("/register", (req, res) => {
 /*  ~~~~~TinyURL~~~~~ */
 //creates URL Index for Users/non-Users
 app.get("/urls", (req, res) => {
-  if (req.session.user_id !== undefined) {
   const userID = req.session.user_id;
   const user = users[userID];
-  const userUrls = urlsForUser(userID, urlDatabase);
+  // const userUrls = urlsForUser(userID, urlDatabase);
     const templateVars = {
-      urls: userUrls,
+      urls: urlDatabase,
       user
     };
     res.render("urls_index", templateVars);
-  } else {
-    return res.redirect("/login");  
-  }
 });
 
 app.post("/urls", (req, res) => {
-  let fullURL = req.body.longURL;
+  const fullURL = req.body.longURL;
   const shortURL = generateRandomString();
   urlDatabase[shortURL] = {};
   urlDatabase[shortURL]["longURL"] = fullURL;
@@ -192,14 +194,28 @@ app.post("/urls/:shortURL/edit", (req, res) => {
 
 // will delete URL's and return to url Index
 app.post("/urls/:shortURL/delete", (req, res) => {
+  const shortURL = req.params.shortURL;
+  const userID = req.session.user_id;
   if (!req.session.user_id) {
-    res.redirect("/login");
+    res.redirect("/error");
   }
+  if (userID !== urlDatabase[shortURL].userID) {
+    return res.status(404).send("cannot delete another users URL");
+  } else {
     delete urlDatabase[req.params.shortURL];
     res.redirect("/urls");
+  }
 });
 
 // end
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
+
+function userByEmail(email) {
+  for (id in users) {
+    if (users[id]["email"] === email) {
+      return users[id];
+    }
+  }
+}
