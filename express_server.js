@@ -39,14 +39,13 @@ app.get('/', (req, res) => {
 app.get("/login", (req,res) => {
   const userID = req.session.user_id;
   const user = users[userID];
-  if (req.session["user_id"] === undefined) {
-    const templateVars = { 
-      user
-    };
-    res.render("login", templateVars);
-  } else {
-    res.redirect("/urls");
-  }
+  if (userID) {
+    return res.redirect("/urls");  
+  } 
+  const templateVars = { 
+    user
+  };
+  res.render("login", templateVars);
 });
 
 app.post("/login", (req, res) => {
