@@ -17,7 +17,8 @@ app.set("view engine", "ejs");
 const { 
   generateRandomString,
   checkEmail,
-  urlsForUser } = require("./helpers");
+  urlsForUser,
+  userByEmail } = require("./helpers");
 
 const users = {};
 
@@ -56,7 +57,7 @@ app.post("/login", (req, res) => {
   for (let user in users) {
     if (email === users[user]["email"]) {
       if (bcrypt.compareSync(req.body.password, users[user]["password"])) {
-        req.session.user_id = userByEmail(email)["id"];
+        req.session.user_id = userByEmail(email, users)["id"];
         return res.redirect("/urls");
       } else {
         return res.status(403).send("incorrect password");
@@ -119,15 +120,14 @@ app.get("/urls", (req, res) => {
   const userID = req.session.user_id;
   const user = users[userID];
   const userURLS = urlsForUser(userID, urlDatabase)
-  if (!user) {
+  if (!userID) {
     res.redirect("/error");
-  } else {
+  }  
     const templateVars = {
       urls: userURLS,
       user
     };
     res.render("urls_index", templateVars);
-  }
 });
 
 app.post("/urls", (req, res) => {
@@ -136,30 +136,30 @@ app.post("/urls", (req, res) => {
   urlDatabase[shortURL] = {};
   urlDatabase[shortURL]["longURL"] = fullURL;
   urlDatabase[shortURL]["userID"] = req.session.user_id;
-  res.redirect("/urls/${shortURL}");
+  res.redirect(`/urls/${shortURL}`);
 });
 
 //Create a new TinyURL
 app.get("/urls/new", (req, res) => {
   const userID = req.session.user_id;
   const user = users[userID];
-  if (user !== undefined) {
-    const templateVars = {
-      user
-    };
+  if (!userID) {
+    return res.redirect("/login")
+  };
+  const templateVars = {
+    user
+  }
     return res.render("urls_new", templateVars);
-  } 
-  return res.redirect("/login")
 });
 
 //makes tinyURL an active link
 app.get("/u/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
-  if (urlDatabase[shortURL] === undefined) {
+  if (!urlDatabase[shortURL]) {
     return res.redirect("/login");
   } 
   const longURL = urlDatabase[shortURL].longURL;
-  return res.redirect(longURL);
+  res.redirect(longURL);
 });
 
 //displays tinyURL link/longURL & Edit URL
@@ -167,16 +167,22 @@ app.get("/urls/:shortURL", (req, res) => {
   const userID = req.session.user_id;
   const user = users[userID];
   const shortURL = req.params.shortURL;
-  if (urlDatabase[shortURL]) {
-    const templateVars = {
-      shortURL,
-      longURL: urlDatabase[shortURL],
-      user
-    };
-    return res.render("urls_show", templateVars);
-    } else {
-      return res.redirect("/login")    
+  if (!userID) {
+    return res.redirect("/login");
+  };
+  if (!urlDatabase[shortURL]) {
+    return res.redirect("/error");
   }
+  const urls = urlsForUser(userID, urlDatabase)
+  if (!Object.keys(urls).includes(shortURL)) {
+    return res.redirect("/error");
+  }
+  const templateVars = {
+    shortURL,
+    longURL: urlDatabase[shortURL],
+    user
+  }
+  res.render("urls_show", templateVars);
 });
 
 /*~~~~~EDIT/DELETE~~~~~*/
@@ -214,10 +220,3 @@ app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
 
-function userByEmail(email) {
-  for (id in users) {
-    if (users[id]["email"] === email) {
-      return users[id];
-    }
-  }
-}
